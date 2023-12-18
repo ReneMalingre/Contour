@@ -11,11 +11,15 @@ import PropTypes from 'prop-types';
 import { useKattLenses } from '../../hooks/useKattLenses';
 import { getDomainOfLensPair } from '../../utils/lensDesigns';
 
-const KattLensPlot = ({ scale, plotWidth }) => {
+const KattLensPlot = ({ plotWidth }) => {
   // get the KattLenses from the global context
   const { kattLenses } = useKattLenses();
   const lens1 = kattLenses.lens1;
   const lens2 = kattLenses.lens2;
+
+  const bands1 = lens1.referenceLinesForBands();
+  const bands2 = lens2.referenceLinesForBands();
+  // console.log(`bands1: ${JSON.stringify(bands1)}`);
 
   // Generate the datasets for the plot
   const datasets = [
@@ -23,23 +27,11 @@ const KattLensPlot = ({ scale, plotWidth }) => {
       data: lens1.points,
       strokeColour: lens1.color,
       label: lens1.lensParametersString(),
-      // referenceYs: kattDesign.referenceLinesY.refPoints,
-      // referenceXs: kattDesign.referenceLinesX.refPoints,
-      // referenceYPosition: 'insideLeft',
-      // referenceXPosition: 'insideTop',
-      // referenceYLabels: kattDesign.referenceLinesY.refLabels,
-      // referenceXLabels: kattDesign.referenceLinesX.refLabels,
     },
     {
       data: lens2.points,
       strokeColour: lens2.color,
       label: lens2.lensParametersString(),
-      // referenceYs: kattDesign2.referenceLinesY.refPoints,
-      // referenceXs: kattDesign2.referenceLinesX.refPoints,
-      // referenceYPosition: 'insideLeft',
-      // referenceXPosition: 'insideBottom',
-      // referenceYLabels: kattDesign2.referenceLinesY.refLabels,
-      // referenceXLabels: kattDesign2.referenceLinesX.refLabels,
     },
   ];
 
@@ -69,7 +61,7 @@ const KattLensPlot = ({ scale, plotWidth }) => {
     <LineChart
       width={chartWidth}
       height={chartHeight}
-      margin={{ top: 5, right: 20, left: 10, bottom: 5 }}
+      margin={{ top: 5, right: 0, left: 0, bottom: 5 }}
     >
       <XAxis
         dataKey="x"
@@ -78,66 +70,66 @@ const KattLensPlot = ({ scale, plotWidth }) => {
         ticks={xTicks}
       />
       <YAxis domain={[yDomain[0], yDomain[1]]} ticks={yTicks} />
-      <CartesianGrid strokeDasharray="2 4" fill="#353535" />
-      <Legend />
+      <CartesianGrid strokeDasharray="1 9" fill="#222" />
+      <Legend verticalAlign="top" align="center" />
       {datasets.map((dataset, index) => (
         <Line
           key={index}
           type="monotone"
           data={dataset.data}
           dataKey="y"
-          stroke={dataset.strokeColour || '#ff7300'}
+          stroke={dataset.strokeColour || '#fff'}
           yAxisId={0}
           dot={false} // Hide the dots on the line
           name={dataset.label}
         />
       ))}
 
-      {/* {datasets.flatMap((dataset, datasetIndex) =>
-        (dataset.referenceYs || []).map((yValue, idx) => (
-          <ReferenceLine
-            key={`ref-${datasetIndex}-${idx}`}
-            y={yValue}
-            stroke={dataset.strokeColour || '#f007300'}
-            strokeDasharray="1 4"
-            label={{
-              value: `${yValue}`,
-              position: dataset.referenceYPosition || `insideLeft`,
-              style: {
-                fontSize: 10 * scale, // Small font size
-                fill: dataset.strokeColour || '#f007300', // Font color
-                fontWeight: 'bold',
-              },
-            }}
-          />
-        )),
-      )} */}
-      {/* 
-      {datasets.flatMap((dataset, datasetIndex) =>
-        (dataset.referenceXs || []).map((xValue, idx) => (
-          <ReferenceLine
-            key={`ref-x-${datasetIndex}-${idx}`}
-            x={xValue}
-            stroke={dataset.strokeColour || '#f007300'}
-            strokeDasharray="1 4"
-            label={{
-              value: `${dataset.referenceXLabels[idx]}`,
-              position: dataset.referenceXPosition || `insideTop`,
-              style: {
-                fontSize: 10 * scale, // Small font size
-                fill: dataset.strokeColour || '#f007300', // Font color
-                fontWeight: 'bold',
-              },
-            }}
-          />
-        )),
-      )} */}
+      {bands1.refPoints.map((point, index) => (
+        <ReferenceLine
+          key={index}
+          y={point}
+          label={{
+            value: `${bands1.refLabels[index]}`,
+            position: `insideLeft`,
+            style: {
+              fontSize: 14, // Small font size
+              fill: lens1.color || '#ffff00', // Font color
+              fontWeight: 'bold',
+            },
+          }}
+          stroke={lens1.color || 'red'}
+          strokeDasharray="1 4"
+        />
+      ))}
+      {lens1.lensDiameter == lens2.lensDiameter ? (
+        <></>
+      ) : (
+        <>
+          {bands2.refPoints.map((point, index) => (
+            <ReferenceLine
+              key={index}
+              y={point}
+              label={{
+                value: `${bands2.refLabels[index]}`,
+                position: `insideRight`,
+                style: {
+                  fontSize: 14, // Small font size
+                  fill: lens2.color || '#ffff00', // Font color
+                  fontWeight: 'bold',
+                },
+              }}
+              stroke={lens2.color || 'yellow'}
+              strokeDasharray="1 4"
+            />
+          ))}{' '}
+        </>
+      )}
     </LineChart>
   );
 };
 
 KattLensPlot.propTypes = {
-  scale: PropTypes.number.isRequired,
   plotWidth: PropTypes.number.isRequired,
 };
 

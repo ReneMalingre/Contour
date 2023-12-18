@@ -64,9 +64,6 @@ class KattLens {
     this.drawBandLabels = false; // draw labels for the lens bands
     this.drawSagLabels = true; // draw labels for the sagitta
 
-    this.referenceLinesSags = []; // the y values and positions and colours for the sag reference lines
-    this.referenceLinesBands = []; // the x values and positions and colours for the band reference lines
-
     this.#haveCalculatedBandWidths = false;
     this.#haveCalculatedBandSags = false;
     this.#haveCalculatedPoints = false;
@@ -391,14 +388,32 @@ class KattLens {
       this.#sagTotalAtReferencePoint =
         this.#sagBackOpticZone + this.#sagT1 + this.#sagT2 + this.#sagSLZ;
 
-      console.log(`back optic zone sag ${this.#sagBackOpticZone}`);
-      console.log(`t1 sag ${this.#sagT1}`);
-      console.log(`t2 sag ${this.#sagT2}`);
-      console.log(`slz sag ${this.#sagSLZ}`);
-      console.log(`total sag ${this.#sagTotalAtReferencePoint}`);
+      // console.log(`back optic zone sag ${this.#sagBackOpticZone}`);
+      // console.log(`t1 sag ${this.#sagT1}`);
+      // console.log(`t2 sag ${this.#sagT2}`);
+      // console.log(`slz sag ${this.#sagSLZ}`);
+      // console.log(`total sag ${this.#sagTotalAtReferencePoint}`);
 
       this.#haveCalculatedBandSags = true;
     }
+  }
+  landingZoneAdjustmentForDiameter() {
+    // calculate the adjustment to the landing zone for the lens diameter
+    if (this.#lensDiameter === 16.5) {
+      return 0;
+    }
+
+    // calculate the sag of a 13mm sclera at 15 mm
+    const sag13mmAt15mm = calculateSag(13, 0, 7.5);
+
+    // calculate the sag of the sclera at the the lens diameter - 1.5mm
+    const sagAtDifferentLZ = calculateSag(
+      13,
+      0,
+      this.#landingReferencePoint / 2,
+    );
+    // console.log(`sag adjustment ${sagAtDifferentLZ - sag13mmAt15mm}`);
+    return sagAtDifferentLZ - sag13mmAt15mm;
   }
 
   calculateSagAtY(y) {
@@ -504,7 +519,9 @@ class KattLens {
     // we want the reference point for the lens to be the middle of the SLZ, so add the sag at the middle of the SLZ to the x values
     // for each point
     for (let i = 0; i < pointCloud.length; i++) {
-      pointCloud[i].x -= this.#sagTotalAtReferencePoint;
+      pointCloud[i].x -=
+        this.#sagTotalAtReferencePoint -
+        this.landingZoneAdjustmentForDiameter();
     }
     this.#points = pointCloud;
     this.#haveCalculatedPoints = true;
@@ -512,12 +529,40 @@ class KattLens {
     // save the data to localStorage
     this.saveToLocalStorage();
   }
+  calculateSagAtYRelativeToLandingZone(y) {
+    let sagAtY = this.calculateSagAtY(y);
+    let sagAtLZ =
+      this.#sagTotalAtReferencePoint - this.landingZoneAdjustmentForDiameter();
+    return sagAtY - sagAtLZ;
+  }
 
   // Method to calculate the reference lines for the sagitta
   // TODO
 
   // Method to calculate the reference lines for the bands
-  // TODO
+  referenceLinesForBands() {
+    // set up the standard data if it hasn't been done already
+    this.initialiseStandardData();
+    const referenceLinesY = { refPoints: [], refLabels: [] };
+
+    referenceLinesY.refPoints.push(this.#backOpticZoneDiameter / 2);
+    referenceLinesY.refLabels.push('BOZD');
+
+    referenceLinesY.refPoints.push(
+      this.#backOpticZoneDiameter / 2 + this.#t1BandWidth,
+    );
+    referenceLinesY.refLabels.push('T1');
+
+    referenceLinesY.refPoints.push(
+      this.#backOpticZoneDiameter / 2 + this.#t1BandWidth + this.#t2BandWidth,
+    );
+    referenceLinesY.refLabels.push('T2');
+
+    referenceLinesY.refPoints.push(this.#landingReferencePoint / 2);
+    referenceLinesY.refLabels.push('Ref Point');
+
+    return referenceLinesY;
+  }
 
   get maxX() {
     if (!this.#haveCalculatedPoints === true) {

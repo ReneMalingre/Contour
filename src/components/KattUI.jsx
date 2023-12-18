@@ -2,10 +2,8 @@ import { useState } from 'react';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
 import InputAdornment from '@mui/material/InputAdornment';
-import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import { CompactPicker } from 'react-color';
+import { GithubPicker } from 'react-color';
 import Stack from '@mui/material/Stack';
 import { Grid } from '@mui/material';
 import { useKattLenses } from '../hooks/useKattLenses';
@@ -74,23 +72,16 @@ const KattUI = ({ lensKey }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <Stack spacing={1} direction="column">
-        <h3
-          style={{
-            color: values.color,
-          }}
-        >
-          KATT Lens {lensKey === 'lens1' ? '1' : '2'}
-        </h3>
+      <Stack spacing={0.1} direction="column">
         <div
           style={{
-            height: '0.5rem',
+            height: '0.25rem',
             width: '100%',
             backgroundColor: values.color,
           }}
         />
-        <Grid container spacing={1}>
-          <Grid item xs={4} sm={2}>
+        <Grid container spacing={0.5}>
+          <Grid item xs={4} sm={3} md={2}>
             <TextField
               name="baseCurve"
               label="Base Curve"
@@ -114,7 +105,7 @@ const KattUI = ({ lensKey }) => {
               variant="standard"
             />
           </Grid>
-          <Grid item xs={4} sm={2}>
+          <Grid item xs={4} sm={3} md={2}>
             <TextField
               name="asphericity"
               label="e Value"
@@ -132,7 +123,7 @@ const KattUI = ({ lensKey }) => {
               helperText="0 sph, 0.5, 0.98"
             />
           </Grid>
-          <Grid item xs={4} sm={2}>
+          <Grid item xs={4} sm={3} md={2}>
             <TextField
               name="t1"
               label="T1"
@@ -156,7 +147,7 @@ const KattUI = ({ lensKey }) => {
               variant="standard"
             />
           </Grid>
-          <Grid item xs={4} sm={2}>
+          <Grid item xs={4} sm={3} md={2}>
             <TextField
               name="t2"
               label="T2"
@@ -180,7 +171,7 @@ const KattUI = ({ lensKey }) => {
               variant="standard"
             />
           </Grid>
-          <Grid item xs={4} sm={2}>
+          <Grid item xs={4} sm={3} md={2}>
             <TextField
               name="slz"
               label="SLZ"
@@ -196,7 +187,7 @@ const KattUI = ({ lensKey }) => {
               variant="standard"
             />
           </Grid>
-          <Grid item xs={4} sm={2}>
+          <Grid item xs={4} sm={3} md={2}>
             <TextField
               name="lensDiameter"
               label="Lens Diameter"
@@ -204,7 +195,7 @@ const KattUI = ({ lensKey }) => {
               onChange={handleChange}
               type="number"
               size="small"
-              sx={{ mb: 0, width: '90%' }}
+              sx={{ mb: 0, width: '95%' }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
@@ -223,7 +214,7 @@ const KattUI = ({ lensKey }) => {
         </Grid>
 
         <Grid container spacing={1}>
-          <Grid item xs={6} sm={4}>
+          <Grid item xs={6}>
             {/* 2/3 of the space for CompactPicker */}
             <FormControl
               sx={{
@@ -232,52 +223,15 @@ const KattUI = ({ lensKey }) => {
                 marginLeft: 0,
               }}
             >
-              <div style={{ maxWidth: 'fit-content' }}>
-                <CompactPicker
-                  key={values.color}
-                  color={values.color}
-                  onChange={handleColorChange}
-                />
-              </div>
+              <GithubPicker
+                key={values.color}
+                color={values.color}
+                onChange={handleColorChange}
+                width="100%"
+              />
             </FormControl>
           </Grid>
-
-          <Grid item xs={6} sm={4}>
-            {' '}
-            {/* Remaining space for checkboxes */}
-            <FormControlLabel
-              control={
-                <Checkbox
-                  name="drawLandmarkLabels"
-                  checked={values.drawLandmarkLabels}
-                  onChange={handleChange}
-                />
-              }
-              label="Show Bands"
-              sx={{ mb: 0, width: '90%' }}
-            />
-            <FormControlLabel
-              control={
-                <Checkbox
-                  name="drawSagLabels"
-                  checked={values.drawSagLabels}
-                  onChange={handleChange}
-                />
-              }
-              label="Show Sags"
-              sx={{ mb: 0, width: '90%' }}
-            />
-            {/* Add more checkboxes as needed */}
-            <Button
-              variant="contained"
-              color="primary"
-              type="submit"
-              sx={{ mt: 1 }} // Using sx for margin-top
-            >
-              Update Lens
-            </Button>
-          </Grid>
-          <Grid item xs={6} sm={4}>
+          <Grid item xs={6}>
             <div
               style={{
                 height: '100%',
@@ -285,19 +239,29 @@ const KattUI = ({ lensKey }) => {
               }}
             >
               {dirtyData ? (
-                <Typography
-                  variant="body2"
-                  style={{ color: values.color, textAlign: 'left' }}
-                >
-                  Press Update Lens to see new sags
-                </Typography>
+                <>
+                  <Typography
+                    variant="body2"
+                    style={{ color: values.color, textAlign: 'center' }}
+                  >
+                    Press Update Lens to see new sags
+                  </Typography>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    type="submit"
+                    sx={{ mt: 1 }} // Using sx for margin-top
+                  >
+                    Update Lens
+                  </Button>
+                </>
               ) : (
                 <>
                   <Typography
                     variant="body2"
                     style={{
                       color: values.color,
-                      marginBottom: '0.25rem',
+                      marginBottom: '0.1rem',
                       textAlign: 'left',
                       fontWeight: 'bold',
                     }}
@@ -309,7 +273,7 @@ const KattUI = ({ lensKey }) => {
                     variant="body2"
                     style={{
                       color: values.color,
-                      marginBottom: '0.25rem',
+                      marginBottom: '0.1rem',
                       textAlign: 'left',
                     }}
                   >
@@ -319,27 +283,32 @@ const KattUI = ({ lensKey }) => {
                     variant="body2"
                     style={{
                       color: values.color,
-                      marginBottom: '0.25rem',
+                      marginBottom: '0.1rem',
                       textAlign: 'left',
                     }}
                   >
-                    Sag after T1: {lens.sagIncludingT1}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    style={{
-                      color: values.color,
-                      marginBottom: '0.25rem',
-                      textAlign: 'left',
-                    }}
-                  >
-                    Sag after T2: {lens.sagIncludingT2}
+                    T1: {lens.sagIncludingT1}; T2: {lens.sagIncludingT2}
                   </Typography>
                 </>
               )}
             </div>
           </Grid>
         </Grid>
+        {values.lensDiameter != 16.5 ? (
+          <Typography
+            variant="body2"
+            style={{
+              color: values.color,
+              textAlign: 'left',
+              marginTop: '1rem',
+            }}
+          >
+            The landing position assumes a sclera with radius of 13 mm. Be
+            cautious if you are comparing lenses with different diameters.
+          </Typography>
+        ) : (
+          <></>
+        )}
       </Stack>
     </form>
   );
