@@ -296,9 +296,32 @@ function generateKATTLensPoints(
   };
 }
 
+function getDomainOfLensPair(lens1, lens2) {
+  const xMax1 = lens1.maxX;
+  const xMin1 = lens1.minX;
+  const yMax1 = lens1.maxY;
+  const yMin1 = lens1.minY;
+
+  const xMax2 = lens2.maxX;
+  const xMin2 = lens2.minX;
+  const yMax2 = lens2.maxY;
+  const yMin2 = lens2.minY;
+
+  const xMax = Math.max(xMax1, xMax2);
+  const xMin = Math.min(xMin1, xMin2);
+  const yMax = Math.max(yMax1, yMax2);
+  const yMin = Math.min(yMin1, yMin2);
+
+  const xDomain = [Math.floor(xMin / 2) * 2 - 2, Math.ceil(xMax / 2) * 2];
+  const yDomain = [Math.floor(yMin / 2) * 2, Math.ceil(yMax / 2) * 2];
+
+  return { xDomain: xDomain, yDomain: yDomain };
+}
+
 export {
   generateLensPoints,
   calculateSag,
   generateKATTLensPoints,
   calculateTangentSag,
+  getDomainOfLensPair,
 };

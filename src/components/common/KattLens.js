@@ -2,42 +2,341 @@ import { calculateSag, calculateTangentSag } from '../../utils/lensDesigns';
 
 class KattLens {
   // private properties
+  // lens parameters
+  #baseCurve;
+  #eValue;
+  #t1;
+  #t2;
+  #slz;
+  #lensDiameter;
+
   // band widths
   #t1BandWidth;
   #t2BandWidth;
   #sLZBandWidth;
   #backOpticZoneDiameter;
   #landingReferencePoint;
-  #haveCalculatedBandWidths;
 
-  // sag of bands
+  // calculated sag of bands
   #sagBackOpticZone;
   #sagT1;
   #sagT2;
   #sagSLZ; // to reference point only, not edge of lens
-  // total sag
+
+  // total sag at the reference point
   #sagTotalAtReferencePoint;
 
-  #haveCalculatedBandSags;
+  // distance between points in mm
+  #pointResolution;
 
-  constructor(baseCurve, eValue, t1, t2, slz, lensDiameter) {
+  // calculated array of points
+  #points;
+
+  // precalculation flags
+  #haveCalculatedBandWidths;
+  #haveCalculatedBandSags;
+  #haveCalculatedPoints;
+
+  // identifier for localStorage
+  #localStorageIdentifier;
+
+  constructor(
+    baseCurve,
+    eValue,
+    t1,
+    t2,
+    slz,
+    lensDiameter,
+    lensKey,
+    load = false,
+  ) {
     // initialise properties based on input parameters
-    this.baseCurve = baseCurve;
-    this.eValue = eValue;
-    this.t1 = t1;
-    this.t2 = t2;
-    this.slz = slz;
-    this.lensDiameter = lensDiameter;
+    this.#baseCurve = baseCurve;
+    this.#eValue = eValue;
+    this.#t1 = t1;
+    this.#t2 = t2;
+    this.#slz = slz;
+    this.#lensDiameter = lensDiameter;
+    this.#localStorageIdentifier = lensKey;
+
     // public properties
-    this.color = '#ffff00#'; // default to yellow
+    this.color = '#ffff00'; // default to yellow
     this.drawBandLabels = false; // draw labels for the lens bands
     this.drawSagLabels = true; // draw labels for the sagitta
-    this.points = []; // the points that make up the lens
+
     this.referenceLinesSags = []; // the y values and positions and colours for the sag reference lines
     this.referenceLinesBands = []; // the x values and positions and colours for the band reference lines
 
     this.#haveCalculatedBandWidths = false;
     this.#haveCalculatedBandSags = false;
+    this.#haveCalculatedPoints = false;
+
+    this.#pointResolution = 0.05;
+
+    // Load saved data from localStorage if available
+    if (load) {
+      this.loadFromLocalStorage();
+    }
+  }
+  saveToLocalStorage() {
+    const data = {
+      baseCurve: this.#baseCurve,
+      asphericity: this.#eValue,
+      t1: this.#t1,
+      t2: this.#t2,
+      slz: this.#slz,
+      lensDiameter: this.#lensDiameter,
+      color: this.color,
+      // ... other properties
+    };
+    const localStorageIdentifier = this.#localStorageIdentifier || 'default';
+    localStorage.setItem(
+      'kattLensData' + localStorageIdentifier,
+      JSON.stringify(data),
+    );
+  }
+
+  loadFromLocalStorage() {
+    const localStorageIdentifier = this.#localStorageIdentifier || 'default';
+    const savedData = localStorage.getItem(
+      'kattLensData' + localStorageIdentifier,
+    );
+    if (savedData) {
+      const data = JSON.parse(savedData);
+
+      // Explicitly set each private field if data exists
+      if (data.baseCurve !== undefined) {
+        this.#baseCurve = data.baseCurve;
+      } else {
+        this.#baseCurve = 7.7;
+      }
+
+      if (data.asphericity !== undefined) {
+        this.#eValue = data.asphericity;
+      } else {
+        this.#eValue = 0.98;
+      }
+      if (data.t1 !== undefined) {
+        this.#t1 = data.t1;
+      } else {
+        this.#t1 = 50;
+      }
+      if (data.t2 !== undefined) {
+        this.#t2 = data.t2;
+      } else {
+        this.#t2 = 45;
+      }
+      if (data.slz !== undefined) {
+        this.#slz = data.slz;
+      } else {
+        this.#slz = 0;
+      }
+      if (data.lensDiameter !== undefined) {
+        this.#lensDiameter = data.lensDiameter;
+      } else {
+        this.#lensDiameter = 16.5;
+      }
+      if (data.color !== undefined) {
+        this.color = data.color;
+      } else {
+        this.color = '#ffff00';
+      }
+      // Repeat the above pattern for other private fields if any
+    }
+  }
+
+  // getters
+  get baseCurve() {
+    return this.#baseCurve;
+  }
+  get eValue() {
+    return this.#eValue;
+  }
+  get t1() {
+    return this.#t1;
+  }
+  get t2() {
+    return this.#t2;
+  }
+  get slz() {
+    return this.#slz;
+  }
+  get lensDiameter() {
+    return this.#lensDiameter;
+  }
+  get sagTotalAtReferencePoint() {
+    return this.#sagTotalAtReferencePoint;
+  }
+  get sagBackOpticZone() {
+    this.initialiseStandardData();
+    return this.#sagBackOpticZone;
+  }
+  get sagT1() {
+    this.initialiseStandardData();
+    return this.#sagT1;
+  }
+  get sagT2() {
+    this.initialiseStandardData();
+    return this.#sagT2;
+  }
+  get sagSLZ() {
+    this.initialiseStandardData();
+    return this.#sagSLZ;
+  }
+  // these 4 return in microns
+  get sagIncludingBackOpticZone() {
+    this.initialiseStandardData();
+    // check for valid values
+    if (this.#sagBackOpticZone === undefined) {
+      return 'invalid';
+    }
+    return Number(this.#sagBackOpticZone * 1000).toFixed(0);
+  }
+  get sagIncludingT1() {
+    this.initialiseStandardData();
+    // check for valid values
+    if (this.#sagBackOpticZone === undefined) {
+      return 'invalid';
+    }
+    if (this.#sagT1 === undefined) {
+      return 'invalid';
+    }
+    return Number((this.#sagBackOpticZone + this.#sagT1) * 1000).toFixed(0);
+  }
+  get sagIncludingT2() {
+    this.initialiseStandardData();
+    // check for valid values
+    if (this.#sagBackOpticZone === undefined) {
+      return 'invalid';
+    }
+    if (this.#sagT1 === undefined) {
+      return 'invalid';
+    }
+    if (this.#sagT2 === undefined) {
+      return 'invalid';
+    }
+    return Number(
+      (this.#sagBackOpticZone + this.#sagT1 + this.#sagT2) * 1000,
+    ).toFixed(0);
+  }
+  get sagIncludingSLZ() {
+    this.initialiseStandardData();
+    // check for valid values
+    if (this.#sagBackOpticZone === undefined) {
+      return 'invalid';
+    }
+    if (this.#sagT1 === undefined) {
+      return 'invalid';
+    }
+    if (this.#sagT2 === undefined) {
+      return 'invalid';
+    }
+    if (this.#sagSLZ === undefined) {
+      return 'invalid';
+    }
+    return Number(
+      (this.#sagBackOpticZone + this.#sagT1 + this.#sagT2 + this.#sagSLZ) *
+        1000,
+    ).toFixed(0);
+  }
+
+  get t1BandWidth() {
+    return this.#t1BandWidth;
+  }
+  get t2BandWidth() {
+    return this.#t2BandWidth;
+  }
+  get sLZBandWidth() {
+    return this.#sLZBandWidth;
+  }
+  get backOpticZoneDiameter() {
+    return this.#backOpticZoneDiameter;
+  }
+  get landingReferencePoint() {
+    return this.#landingReferencePoint;
+  }
+  get points() {
+    if (!this.#haveCalculatedPoints === true) {
+      this.calculatePoints();
+    }
+    return this.#points;
+  }
+  get pointResolution() {
+    return this.#pointResolution;
+  }
+  get localStorageIdentifier() {
+    return this.#localStorageIdentifier;
+  }
+
+  // setters
+  set baseCurve(baseCurve) {
+    this.#baseCurve = baseCurve;
+    this.#haveCalculatedBandSags = false;
+    this.#haveCalculatedPoints = false;
+  }
+  set eValue(eValue) {
+    this.#eValue = eValue;
+    this.#haveCalculatedBandSags = false;
+    this.#haveCalculatedPoints = false;
+  }
+  set t1(t1) {
+    this.#t1 = t1;
+    this.#haveCalculatedBandSags = false;
+    this.#haveCalculatedPoints = false;
+  }
+  set t2(t2) {
+    this.#t2 = t2;
+    this.#haveCalculatedBandSags = false;
+    this.#haveCalculatedPoints = false;
+  }
+  set slz(slz) {
+    this.#slz = slz;
+    this.#haveCalculatedBandSags = false;
+    this.#haveCalculatedPoints = false;
+  }
+  set lensDiameter(lensDiameter) {
+    this.#lensDiameter = lensDiameter;
+    this.#haveCalculatedBandWidths = false;
+    this.#haveCalculatedBandSags = false;
+    this.#haveCalculatedPoints = false;
+  }
+  set pointResolution(pointResolution) {
+    this.#pointResolution = pointResolution;
+    this.#haveCalculatedPoints = false;
+  }
+  set localStorageIdentifier(localStorageIdentifier) {
+    this.#localStorageIdentifier = localStorageIdentifier;
+  }
+
+  lensParameters() {
+    return {
+      baseCurve: this.#baseCurve,
+      eValue: this.#eValue,
+      t1: this.#t1,
+      t2: this.#t2,
+      slz: this.#slz,
+      lensDiameter: this.#lensDiameter,
+    };
+  }
+
+  lensParametersString() {
+    return `${parseFloat(Number(this.#baseCurve).toFixed(4))} e${
+      this.#eValue
+    } ${this.#t1}\\${this.#t2} ${this.#lensDiameter} SLZ ${this.#slz}`;
+  }
+  lensBandSagsString() {
+    this.initialiseStandardData();
+    return JSON.stringify(
+      {
+        sagBackOpticZone: this.#sagBackOpticZone,
+        sagT1: this.#sagT1,
+        sagT2: this.#sagT2,
+        sagSLZ: this.#sagSLZ,
+        sagTotalAtReferencePoint: this.#sagTotalAtReferencePoint,
+      },
+      null,
+      2,
+    );
   }
 
   calculateT1BandWidth() {
@@ -91,6 +390,13 @@ class KattLens {
       this.#sagSLZ = this.lookupKattSLZReferenceSag();
       this.#sagTotalAtReferencePoint =
         this.#sagBackOpticZone + this.#sagT1 + this.#sagT2 + this.#sagSLZ;
+
+      console.log(`back optic zone sag ${this.#sagBackOpticZone}`);
+      console.log(`t1 sag ${this.#sagT1}`);
+      console.log(`t2 sag ${this.#sagT2}`);
+      console.log(`slz sag ${this.#sagSLZ}`);
+      console.log(`total sag ${this.#sagTotalAtReferencePoint}`);
+
       this.#haveCalculatedBandSags = true;
     }
   }
@@ -138,8 +444,18 @@ class KattLens {
         this.#backOpticZoneDiameter / 2 -
         this.#t1BandWidth -
         this.#t2BandWidth;
+
       // calculate the sag of the SLZ at this y value
       const sagIntoSLZ = this.guesstimateSLZPointSag(yIntoSLZ);
+      // console.log(`yIntoSLZ ${yIntoSLZ} sagIntoSLZ ${sagIntoSLZ}`);
+      // if (Math.abs(y - 7.5) < 0.01) {
+      //   console.log(`yIntoSLZ ${yIntoSLZ} sagIntoSLZ ${sagIntoSLZ}`);
+      //   console.log(
+      //     ` total sag at 15mm ${
+      //       this.#sagBackOpticZone + this.#sagT1 + this.#sagT2 + sagIntoSLZ
+      //     }`,
+      //   );
+      // }
       // return the sum of the sag of the back optic zone, T1, T2 and SLZ
       return this.#sagBackOpticZone + this.#sagT1 + this.#sagT2 + sagIntoSLZ;
     }
@@ -151,7 +467,7 @@ class KattLens {
     // make it a quadratic that is rotated from the beginning of the zone
     // x = ay^2
 
-    const a = 0.6;
+    const a = 0.5;
 
     // calculate the depth of the parabola at the reference point
     const sagAtReferencePoint = a * this.#sLZBandWidth * this.#sLZBandWidth;
@@ -174,19 +490,58 @@ class KattLens {
     return sagRotation - sagParabola;
   }
 
-  // Method to calculate points
+  // Method to calculate x, y points that make up the lens shape
   calculatePoints() {
-    // calculate the points that make up the lens
+    // set up the standard data if it hasn't been done already
     this.initialiseStandardData();
 
     // calculate the points that make up the lens
-    const pointResolution = 0.05;
     const pointCloud = [];
-    for (let y = 0; y <= this.lensDiameter; y += pointResolution) {
+    for (let y = 0; y <= this.lensDiameter / 2; y += this.#pointResolution) {
       const x = this.calculateSagAtY(y);
       pointCloud.push({ x, y });
     }
-    this.points = pointCloud;
+    // we want the reference point for the lens to be the middle of the SLZ, so add the sag at the middle of the SLZ to the x values
+    // for each point
+    for (let i = 0; i < pointCloud.length; i++) {
+      pointCloud[i].x -= this.#sagTotalAtReferencePoint;
+    }
+    this.#points = pointCloud;
+    this.#haveCalculatedPoints = true;
+
+    // save the data to localStorage
+    this.saveToLocalStorage();
+  }
+
+  // Method to calculate the reference lines for the sagitta
+  // TODO
+
+  // Method to calculate the reference lines for the bands
+  // TODO
+
+  get maxX() {
+    if (!this.#haveCalculatedPoints === true) {
+      this.calculatePoints();
+    }
+    return Math.max(...this.#points.map((point) => point.x));
+  }
+  get minX() {
+    if (!this.#haveCalculatedPoints === true) {
+      this.calculatePoints();
+    }
+    return Math.min(...this.#points.map((point) => point.x));
+  }
+  get maxY() {
+    if (!this.#haveCalculatedPoints === true) {
+      this.calculatePoints();
+    }
+    return Math.max(...this.#points.map((point) => point.y));
+  }
+  get minY() {
+    if (!this.#haveCalculatedPoints === true) {
+      this.calculatePoints();
+    }
+    return Math.min(...this.#points.map((point) => point.y));
   }
 }
 

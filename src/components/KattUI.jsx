@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import TextField from '@mui/material/TextField';
 import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
 import InputAdornment from '@mui/material/InputAdornment';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
@@ -9,12 +8,16 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import { CompactPicker } from 'react-color';
 import Stack from '@mui/material/Stack';
 import { Grid } from '@mui/material';
-import { useKattLenses } from '../hooks/KattLensContext';
+import { useKattLenses } from '../hooks/useKattLenses';
+import KattLens from './common/KattLens';
+import PropTypes from 'prop-types';
+import Typography from '@mui/material/Typography';
 
 const KattUI = ({ lensKey }) => {
   const { kattLenses, updateLens } = useKattLenses();
   const lens = kattLenses[lensKey];
-
+  // console.log(`lensKey ${lensKey} ${lens.lensParametersString()}`);
+  // console.log(`${lens.lensBandSagsString()}`);
   const [values, setValues] = useState({
     baseCurve: lens.baseCurve,
     asphericity: lens.eValue,
@@ -27,6 +30,9 @@ const KattUI = ({ lensKey }) => {
     drawLandmarkLabels: false,
     drawSagLabels: false,
   });
+  // console.log(`values ${values.color}`);
+
+  const [dirtyData, setDirtyData] = useState(false);
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
@@ -34,6 +40,7 @@ const KattUI = ({ lensKey }) => {
       ...prevValues,
       [name]: type === 'checkbox' ? checked : value,
     }));
+    setDirtyData(true); // Update dirtyData state
   };
 
   const handleColorChange = (color) => {
@@ -41,6 +48,7 @@ const KattUI = ({ lensKey }) => {
       ...prevValues,
       color: color.hex,
     }));
+    console.log(`color ${color.hex}`);
   };
 
   const handleSubmit = (event) => {
@@ -52,27 +60,37 @@ const KattUI = ({ lensKey }) => {
       values.t2,
       values.slz,
       values.lensDiameter,
-      values.color,
-      values.drawLandmarkLabels,
-      values.drawSagLabels,
+      lensKey,
+
       // ... other properties
     );
-    // Update the lens in the global context
-    updateLens(lensKey, updatedLens);
+    (updatedLens.color = values.color),
+      (updateLens.drawLandmarkLabels = values.drawLandmarkLabels),
+      (updatedLens.drawSagLabels = values.drawSagLabels),
+      // Update the lens in the global context
+      updateLens(lensKey, updatedLens);
+    setDirtyData(false); // Reset dirtyData state after update
   };
 
   return (
     <form onSubmit={handleSubmit}>
       <Stack spacing={1} direction="column">
+        <h3
+          style={{
+            color: values.color,
+          }}
+        >
+          KATT Lens {lensKey === 'lens1' ? '1' : '2'}
+        </h3>
         <div
           style={{
-            height: '20px',
+            height: '0.5rem',
             width: '100%',
             backgroundColor: values.color,
           }}
         />
         <Grid container spacing={1}>
-          <Grid item xs={6} sm={4}>
+          <Grid item xs={4} sm={2}>
             <TextField
               name="baseCurve"
               label="Base Curve"
@@ -96,7 +114,7 @@ const KattUI = ({ lensKey }) => {
               variant="standard"
             />
           </Grid>
-          <Grid item xs={6} sm={4}>
+          <Grid item xs={4} sm={2}>
             <TextField
               name="asphericity"
               label="e Value"
@@ -114,7 +132,7 @@ const KattUI = ({ lensKey }) => {
               helperText="0 sph, 0.5, 0.98"
             />
           </Grid>
-          <Grid item xs={6} sm={4}>
+          <Grid item xs={4} sm={2}>
             <TextField
               name="t1"
               label="T1"
@@ -138,7 +156,7 @@ const KattUI = ({ lensKey }) => {
               variant="standard"
             />
           </Grid>
-          <Grid item xs={6} sm={4}>
+          <Grid item xs={4} sm={2}>
             <TextField
               name="t2"
               label="T2"
@@ -162,7 +180,7 @@ const KattUI = ({ lensKey }) => {
               variant="standard"
             />
           </Grid>
-          <Grid item xs={6} sm={4}>
+          <Grid item xs={4} sm={2}>
             <TextField
               name="slz"
               label="SLZ"
@@ -178,7 +196,7 @@ const KattUI = ({ lensKey }) => {
               variant="standard"
             />
           </Grid>
-          <Grid item xs={6} sm={4}>
+          <Grid item xs={4} sm={2}>
             <TextField
               name="lensDiameter"
               label="Lens Diameter"
@@ -205,7 +223,7 @@ const KattUI = ({ lensKey }) => {
         </Grid>
 
         <Grid container spacing={1}>
-          <Grid item xs={6} sm={6}>
+          <Grid item xs={6} sm={4}>
             {/* 2/3 of the space for CompactPicker */}
             <FormControl
               sx={{
@@ -216,6 +234,7 @@ const KattUI = ({ lensKey }) => {
             >
               <div style={{ maxWidth: 'fit-content' }}>
                 <CompactPicker
+                  key={values.color}
                   color={values.color}
                   onChange={handleColorChange}
                 />
@@ -223,7 +242,7 @@ const KattUI = ({ lensKey }) => {
             </FormControl>
           </Grid>
 
-          <Grid item xs={6} sm={6}>
+          <Grid item xs={6} sm={4}>
             {' '}
             {/* Remaining space for checkboxes */}
             <FormControlLabel
@@ -249,26 +268,83 @@ const KattUI = ({ lensKey }) => {
               sx={{ mb: 0, width: '90%' }}
             />
             {/* Add more checkboxes as needed */}
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              sx={{ mt: 1 }} // Using sx for margin-top
+            >
+              Update Lens
+            </Button>
+          </Grid>
+          <Grid item xs={6} sm={4}>
+            <div
+              style={{
+                height: '100%',
+                width: '100%',
+              }}
+            >
+              {dirtyData ? (
+                <Typography
+                  variant="body2"
+                  style={{ color: values.color, textAlign: 'left' }}
+                >
+                  Press Update Lens to see new sags
+                </Typography>
+              ) : (
+                <>
+                  <Typography
+                    variant="body2"
+                    style={{
+                      color: values.color,
+                      marginBottom: '0.25rem',
+                      textAlign: 'left',
+                      fontWeight: 'bold',
+                    }}
+                  >
+                    Sag at Reference ({lens.landingReferencePoint} mm):{' '}
+                    {lens.sagIncludingSLZ}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    style={{
+                      color: values.color,
+                      marginBottom: '0.25rem',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Back Optic Sag: {lens.sagIncludingBackOpticZone}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    style={{
+                      color: values.color,
+                      marginBottom: '0.25rem',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Sag after T1: {lens.sagIncludingT1}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    style={{
+                      color: values.color,
+                      marginBottom: '0.25rem',
+                      textAlign: 'left',
+                    }}
+                  >
+                    Sag after T2: {lens.sagIncludingT2}
+                  </Typography>
+                </>
+              )}
+            </div>
           </Grid>
         </Grid>
-        <div
-          style={{
-            height: '20px',
-            width: '100%',
-            backgroundColor: values.color,
-          }}
-        />
-        <Button
-          variant="contained"
-          color="primary"
-          type="submit"
-          sx={{ mt: 1 }} // Using sx for margin-top
-        >
-          Draw
-        </Button>
       </Stack>
     </form>
   );
 };
-
+KattUI.propTypes = {
+  lensKey: PropTypes.string.isRequired,
+};
 export default KattUI;

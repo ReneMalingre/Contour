@@ -8,48 +8,52 @@ import {
   ReferenceLine,
 } from 'recharts';
 import PropTypes from 'prop-types';
-import { useKattLenses } from '../hooks/KattLensContext';
+import { useKattLenses } from '../../hooks/useKattLenses';
+import { getDomainOfLensPair } from '../../utils/lensDesigns';
 
-const KattLensPlot = ({ scale }) => {
-  // find the max and min values of x and y in the KattLenses
+const KattLensPlot = ({ scale, plotWidth }) => {
+  // get the KattLenses from the global context
   const { kattLenses } = useKattLenses();
   const lens1 = kattLenses.lens1;
   const lens2 = kattLenses.lens2;
 
-  const xMax1 = lens1.maxX;
-  const xMin1 = lens1.minX;
-  const yMax1 = lens1.maxY;
-  const yMin1 = lens1.minY;
+  // Generate the datasets for the plot
+  const datasets = [
+    {
+      data: lens1.points,
+      strokeColour: lens1.color,
+      label: lens1.lensParametersString(),
+      // referenceYs: kattDesign.referenceLinesY.refPoints,
+      // referenceXs: kattDesign.referenceLinesX.refPoints,
+      // referenceYPosition: 'insideLeft',
+      // referenceXPosition: 'insideTop',
+      // referenceYLabels: kattDesign.referenceLinesY.refLabels,
+      // referenceXLabels: kattDesign.referenceLinesX.refLabels,
+    },
+    {
+      data: lens2.points,
+      strokeColour: lens2.color,
+      label: lens2.lensParametersString(),
+      // referenceYs: kattDesign2.referenceLinesY.refPoints,
+      // referenceXs: kattDesign2.referenceLinesX.refPoints,
+      // referenceYPosition: 'insideLeft',
+      // referenceXPosition: 'insideBottom',
+      // referenceYLabels: kattDesign2.referenceLinesY.refLabels,
+      // referenceXLabels: kattDesign2.referenceLinesX.refLabels,
+    },
+  ];
 
-  const xMax2 = lens2.maxX;
-  const xMin2 = lens2.minX;
-  const yMax2 = lens2.maxY;
-  const yMin2 = lens2.minY;
+  // find the max and min values of x and y in the KattLenses
+  const domain = getDomainOfLensPair(lens1, lens2);
+  const xDomain = domain.xDomain;
+  const yDomain = domain.yDomain;
 
-  const xMax = Math.max(xMax1, xMax2);
-  const xMin = Math.min(xMin1, xMin2);
-  const yMax = Math.max(yMax1, yMax2);
-  const yMin = Math.min(yMin1, yMin2);
-
-  const xValues = datasets.map((dataset) =>
-    dataset.data.map((point) => point.x),
-  );
-  const yValues = datasets.map((dataset) =>
-    dataset.data.map((point) => point.y),
-  );
-  const xMax = Math.max(...xValues.flat());
-  const xMin = Math.min(...xValues.flat());
-  const yMax = Math.max(...yValues.flat());
-  const yMin = Math.min(...yValues.flat());
-  // set the domain of the X and Y axes to be the max and min values of x and y rounded to the nearest 2
-  // so the axes are always the same size and the graph doesn't jump around when zooming in and out
-  const xDomain = [Math.floor(xMin / 2) * 2 - 2, Math.ceil(xMax / 2) * 2];
-  const yDomain = [Math.floor(yMin / 2) * 2, Math.ceil(yMax / 2) * 2];
   const xRange = xDomain[1] - xDomain[0];
   const yRange = yDomain[1] - yDomain[0];
+
   const aspectRatio = xRange / yRange;
-  const chartHeight = 500 * scale;
-  const chartWidth = chartHeight * aspectRatio;
+  const chartWidth = plotWidth;
+  const chartHeight = chartWidth / aspectRatio;
 
   // Generate ticks for X and Y axes
   const xTicks = [];
@@ -88,7 +92,8 @@ const KattLensPlot = ({ scale }) => {
           name={dataset.label}
         />
       ))}
-      {datasets.flatMap((dataset, datasetIndex) =>
+
+      {/* {datasets.flatMap((dataset, datasetIndex) =>
         (dataset.referenceYs || []).map((yValue, idx) => (
           <ReferenceLine
             key={`ref-${datasetIndex}-${idx}`}
@@ -106,7 +111,8 @@ const KattLensPlot = ({ scale }) => {
             }}
           />
         )),
-      )}
+      )} */}
+      {/* 
       {datasets.flatMap((dataset, datasetIndex) =>
         (dataset.referenceXs || []).map((xValue, idx) => (
           <ReferenceLine
@@ -125,26 +131,14 @@ const KattLensPlot = ({ scale }) => {
             }}
           />
         )),
-      )}
+      )} */}
     </LineChart>
   );
 };
 
-BetaLensPlot.propTypes = {
+KattLensPlot.propTypes = {
   scale: PropTypes.number.isRequired,
-  datasets: PropTypes.arrayOf(
-    PropTypes.shape({
-      data: PropTypes.arrayOf(PropTypes.object).isRequired,
-      strokeColour: PropTypes.string,
-      label: PropTypes.string,
-      referenceYs: PropTypes.arrayOf(PropTypes.number),
-      referenceXs: PropTypes.arrayOf(PropTypes.number),
-      referenceYPosition: PropTypes.string,
-      referenceXPosition: PropTypes.string,
-      referenceYLabels: PropTypes.arrayOf(PropTypes.string),
-      referenceXLabels: PropTypes.arrayOf(PropTypes.string),
-    }),
-  ).isRequired,
+  plotWidth: PropTypes.number.isRequired,
 };
 
 export default KattLensPlot;

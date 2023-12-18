@@ -1,12 +1,14 @@
-// KattLensContext.js
-import React, { createContext, useState, useContext } from 'react';
+// KattLensContext.jsx
+import { createContext, useState } from 'react';
+import PropTypes from 'prop-types';
+import KattLens from '../components/common/KattLens';
 
 export const KattLensContext = createContext();
 
 export const KattLensProvider = ({ children }) => {
   const [kattLenses, setKattLenses] = useState({
-    lens1: new KattLens(7.7, 0.98, 50, 45, 0, 16.5),
-    lens2: new KattLens(7.7, 0.5, 50, 45, 0, 16.5),
+    lens1: new KattLens(7.7, 0.98, 50, 45, 0, 16.5, 'lens1', true),
+    lens2: new KattLens(7.7, 0.5, 50, 45, 0, 16.5, 'lens2', true),
   });
 
   // Function to update a specific lens
@@ -24,5 +26,6 @@ export const KattLensProvider = ({ children }) => {
   );
 };
 
-// Use this hook to access and update KattLenses in any component
-export const useKattLenses = () => useContext(KattLensContext);
+KattLensProvider.propTypes = {
+  children: PropTypes.node.isRequired,
+};
