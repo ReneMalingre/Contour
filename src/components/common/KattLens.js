@@ -601,20 +601,28 @@ class KattLens {
     const referenceLinesY = { refPoints: [], refLabels: [] };
 
     referenceLinesY.refPoints.push(this.#backOpticZoneDiameter / 2);
-    referenceLinesY.refLabels.push('BOZD');
+    referenceLinesY.refLabels.push(`BOZD ${this.#backOpticZoneDiameter}mm`);
 
     referenceLinesY.refPoints.push(
       this.#backOpticZoneDiameter / 2 + this.#t1BandWidth,
     );
-    referenceLinesY.refLabels.push('T1');
+    referenceLinesY.refLabels.push(
+      `T1 ${this.#backOpticZoneDiameter + this.#t1BandWidth * 2}mm`,
+    );
 
     referenceLinesY.refPoints.push(
       this.#backOpticZoneDiameter / 2 + this.#t1BandWidth + this.#t2BandWidth,
     );
-    referenceLinesY.refLabels.push('T2');
+    referenceLinesY.refLabels.push(
+      `T2 ${
+        this.#backOpticZoneDiameter +
+        this.#t1BandWidth * 2 +
+        this.#t2BandWidth * 2
+      }mm`,
+    );
 
     referenceLinesY.refPoints.push(this.#landingReferencePoint / 2);
-    referenceLinesY.refLabels.push('Ref Point');
+    referenceLinesY.refLabels.push(`Ref ${this.#landingReferencePoint}mm`);
 
     return referenceLinesY;
   }
