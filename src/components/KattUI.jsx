@@ -1,9 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import TextField from '@mui/material/TextField';
-import FormControl from '@mui/material/FormControl';
 import InputAdornment from '@mui/material/InputAdornment';
-import Button from '@mui/material/Button';
-import { GithubPicker } from 'react-color';
 import Stack from '@mui/material/Stack';
 import { Grid } from '@mui/material';
 import { useKattLenses } from '../hooks/useKattLenses';
@@ -14,64 +11,89 @@ import Typography from '@mui/material/Typography';
 const KattUI = ({ lensKey }) => {
   const { kattLenses, updateLens } = useKattLenses();
   const lens = kattLenses[lensKey];
-  // console.log(`lensKey ${lensKey} ${lens.lensParametersString()}`);
-  // console.log(`${lens.lensBandSagsString()}`);
-  const [values, setValues] = useState({
-    baseCurve: lens.baseCurve,
-    asphericity: lens.eValue,
-    t1: lens.t1,
-    t2: lens.t2,
-    slz: lens.slz,
-    lensDiameter: lens.lensDiameter,
-    // Add more text fields as needed
-    color: lens.color,
-    drawLandmarkLabels: false,
-    drawSagLabels: false,
-  });
-  // console.log(`values ${values.color}`);
 
-  const [dirtyData, setDirtyData] = useState(false);
+  // Initialize the internal state
+  const [values, setValues] = useState(getLensValues(lens));
+  const [invalidData, setInvalidData] = useState(false);
+
+  // Update internal state when the lens data changes
+  useEffect(() => {
+    setValues(getLensValues(lens));
+  }, [lens]);
+
+  // Helper function to extract lens values
+  function getLensValues(lens) {
+    return {
+      baseCurve: lens.baseCurve,
+      asphericity: lens.eValue,
+      t1: lens.t1,
+      t2: lens.t2,
+      slz: lens.slz,
+      lensDiameter: lens.lensDiameter,
+      color: lens.color,
+      drawLandmarkLabels: lens.drawLandmarkLabels,
+      drawSagLabels: lens.drawSagLabels,
+    };
+  }
+
+  const lensKeyLastChar = lensKey.slice(-1);
 
   const handleChange = (event) => {
     const { name, value, type, checked } = event.target;
+    const updatedValue = type === 'checkbox' ? checked : value;
+
     setValues((prevValues) => ({
       ...prevValues,
-      [name]: type === 'checkbox' ? checked : value,
+      [name]: updatedValue,
     }));
-    setDirtyData(true); // Update dirtyData state
+
+    // Now use updatedValue for validation and updates
+    // this is needed because the setValues function is asynchronous
+    const newValues = { ...values, [name]: updatedValue };
+
+    // check that the values are valid
+    if (
+      newValues.baseCurve < 4 ||
+      newValues.baseCurve > 15 ||
+      newValues.asphericity < 0 ||
+      newValues.asphericity > 2 ||
+      newValues.t1 < 20 ||
+      newValues.t1 > 80 ||
+      newValues.t2 < 20 ||
+      newValues.t2 > 80 ||
+      newValues.slz < 0 ||
+      newValues.slz > 5 ||
+      newValues.lensDiameter < 16.5 ||
+      newValues.lensDiameter > 18.5
+    ) {
+      setInvalidData(true);
+    } else {
+      setInvalidData(false);
+      updateKattLens(newValues);
+    }
   };
 
-  const handleColorChange = (color) => {
-    setValues((prevValues) => ({
-      ...prevValues,
-      color: color.hex,
-    }));
-    console.log(`color ${color.hex}`);
-  };
-
-  const handleSubmit = (event) => {
-    event.preventDefault();
+  const updateKattLens = (newValues) => {
     const updatedLens = new KattLens(
-      values.baseCurve,
-      values.asphericity,
-      values.t1,
-      values.t2,
-      values.slz,
-      values.lensDiameter,
+      newValues.baseCurve,
+      newValues.asphericity,
+      newValues.t1,
+      newValues.t2,
+      newValues.slz,
+      newValues.lensDiameter,
       lensKey,
 
       // ... other properties
     );
-    (updatedLens.color = values.color),
-      (updateLens.drawLandmarkLabels = values.drawLandmarkLabels),
-      (updatedLens.drawSagLabels = values.drawSagLabels),
-      // Update the lens in the global context
-      updateLens(lensKey, updatedLens);
-    setDirtyData(false); // Reset dirtyData state after update
+    updatedLens.color = values.color;
+    updateLens.drawLandmarkLabels = values.drawLandmarkLabels;
+    updatedLens.drawSagLabels = values.drawSagLabels;
+    // Update the lens in the global context
+    updateLens(lensKey, updatedLens);
   };
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form>
       <Stack spacing={0.1} direction="column">
         <div
           style={{
@@ -80,7 +102,7 @@ const KattUI = ({ lensKey }) => {
             backgroundColor: values.color,
           }}
         />
-        <Grid container spacing={0.5}>
+        <Grid container spacing={0.25}>
           <Grid item xs={4} sm={3} md={2}>
             <TextField
               name="baseCurve"
@@ -100,7 +122,7 @@ const KattUI = ({ lensKey }) => {
               inputProps={{
                 min: 4,
                 max: 15,
-                step: 'any', // allows decimal values
+                step: 0.1, // allows decimal values
               }}
               variant="standard"
             />
@@ -117,7 +139,7 @@ const KattUI = ({ lensKey }) => {
               inputProps={{
                 min: 0,
                 max: 2,
-                step: 'any',
+                step: 0.1,
               }}
               variant="standard"
               helperText="0 sph, 0.5, 0.98"
@@ -142,7 +164,7 @@ const KattUI = ({ lensKey }) => {
               inputProps={{
                 min: 20,
                 max: 80,
-                step: 'any',
+                step: 1,
               }}
               variant="standard"
             />
@@ -166,7 +188,7 @@ const KattUI = ({ lensKey }) => {
               inputProps={{
                 min: 20,
                 max: 80,
-                step: 'any',
+                step: 1,
               }}
               variant="standard"
             />
@@ -214,98 +236,76 @@ const KattUI = ({ lensKey }) => {
         </Grid>
 
         <Grid container spacing={1}>
-          <Grid item xs={6}>
-            {/* 2/3 of the space for CompactPicker */}
-            <FormControl
-              sx={{
-                display: 'flex',
-                justifyContent: 'flex-start',
-                marginLeft: 0,
-              }}
-            >
-              <GithubPicker
-                key={values.color}
-                color={values.color}
-                onChange={handleColorChange}
-                width="100%"
-              />
-            </FormControl>
-          </Grid>
-          <Grid item xs={6}>
-            <div
+          <Grid item xs={4}>
+            <Typography
+              variant="body2"
               style={{
-                height: '100%',
-                width: '100%',
+                color: values.color,
+                textAlign: 'left',
+                fontWeight: 'bold',
               }}
             >
-              {dirtyData ? (
-                <>
-                  <Typography
-                    variant="body2"
-                    style={{ color: values.color, textAlign: 'center' }}
-                  >
-                    Press Update Lens to see new sags
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    type="submit"
-                    sx={{ mt: 1 }} // Using sx for margin-top
-                  >
-                    Update Lens
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Typography
-                    variant="body2"
-                    style={{
-                      color: values.color,
-                      marginBottom: '0.1rem',
-                      textAlign: 'left',
-                      fontWeight: 'bold',
-                    }}
-                  >
-                    Sag at Reference ({lens.landingReferencePoint} mm):{' '}
-                    {lens.sagIncludingSLZ}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    style={{
-                      color: values.color,
-                      marginBottom: '0.1rem',
-                      textAlign: 'left',
-                    }}
-                  >
-                    Back Optic Sag: {lens.sagIncludingBackOpticZone}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    style={{
-                      color: values.color,
-                      marginBottom: '0.1rem',
-                      textAlign: 'left',
-                    }}
-                  >
-                    T1: {lens.sagIncludingT1}; T2: {lens.sagIncludingT2}
-                  </Typography>
-                </>
-              )}
-            </div>
+              KATT Lens {lensKeyLastChar}
+            </Typography>
           </Grid>
+          {invalidData ? (
+            <>
+              <Grid item xs={6}>
+                <Typography
+                  variant="body2"
+                  style={{ color: values.color, textAlign: 'center' }}
+                >
+                  Fix your entries to update the lens.
+                </Typography>
+              </Grid>
+            </>
+          ) : (
+            <>
+              <Grid item xs={4}>
+                <Typography
+                  variant="body2"
+                  style={{
+                    color: values.color,
+                    marginBottom: '0.1rem',
+                    textAlign: 'left',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  Sag at Reference ({lens.landingReferencePoint} mm):{' '}
+                  {lens.sagIncludingSLZ}
+                </Typography>
+              </Grid>
+              <Grid item xs={4}>
+                <Typography
+                  variant="body2"
+                  style={{
+                    color: values.color,
+                    marginBottom: '0.1rem',
+                    textAlign: 'left',
+                  }}
+                >
+                  Back Optic Sag: {lens.sagIncludingBackOpticZone}; T1:{' '}
+                  {lens.sagIncludingT1}; T2: {lens.sagIncludingT2}
+                </Typography>
+              </Grid>
+            </>
+          )}
         </Grid>
         {values.lensDiameter != 16.5 ? (
-          <Typography
-            variant="body2"
-            style={{
-              color: values.color,
-              textAlign: 'left',
-              marginTop: '1rem',
-            }}
-          >
-            The landing position assumes a sclera with radius of 13 mm. Be
-            cautious if you are comparing lenses with different diameters.
-          </Typography>
+          <Grid item xs={12}>
+            <Typography
+              variant="body2"
+              style={{
+                color: values.color,
+                textAlign: 'left',
+                marginTop: '1rem',
+              }}
+            >
+              The landing position of this lens assumes a sclera with radius of
+              13 mm. Be cautious if you are comparing lenses with different
+              diameters.
+            </Typography>
+          </Grid>
         ) : (
           <></>
         )}

@@ -6,12 +6,17 @@ import {
   CartesianGrid,
   Legend,
   ReferenceLine,
+  ResponsiveContainer,
 } from 'recharts';
-import PropTypes from 'prop-types';
 import { useKattLenses } from '../../hooks/useKattLenses';
 import { getDomainOfLensPair } from '../../utils/lensDesigns';
+import { useRef, useState, useEffect } from 'react';
 
-const KattLensPlot = ({ plotWidth }) => {
+const KattLensPlot = () => {
+  // Stuff to get the dimensions correct
+  const containerRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
   // get the KattLenses from the global context
   const { kattLenses } = useKattLenses();
   const lens1 = kattLenses.lens1;
@@ -44,8 +49,19 @@ const KattLensPlot = ({ plotWidth }) => {
   const yRange = yDomain[1] - yDomain[0];
 
   const aspectRatio = xRange / yRange;
-  const chartWidth = plotWidth;
-  const chartHeight = chartWidth / aspectRatio;
+
+  // more stuff to get the dimensions correct
+  useEffect(() => {
+    const resizeObserver = new ResizeObserver((entries) => {
+      if (entries.length === 0 || !entries[0].target) return;
+      const newWidth = entries[0].target.getBoundingClientRect().width;
+      setContainerWidth(newWidth);
+    });
+
+    resizeObserver.observe(containerRef.current);
+
+    return () => resizeObserver.disconnect();
+  }, []);
 
   // Generate ticks for X and Y axes
   const xTicks = [];
@@ -58,79 +74,79 @@ const KattLensPlot = ({ plotWidth }) => {
     yTicks.push(i);
   }
   return (
-    <LineChart
-      width={chartWidth}
-      height={chartHeight}
-      margin={{ top: 5, right: 0, left: 0, bottom: 5 }}
-    >
-      <XAxis
-        dataKey="x"
-        type="number"
-        domain={[xDomain[0], xDomain[1]]}
-        ticks={xTicks}
-      />
-      <YAxis domain={[yDomain[0], yDomain[1]]} ticks={yTicks} />
-      <CartesianGrid strokeDasharray="1 9" fill="#222" />
-      <Legend verticalAlign="top" align="center" />
-      {datasets.map((dataset, index) => (
-        <Line
-          key={index}
-          type="monotone"
-          data={dataset.data}
-          dataKey="y"
-          stroke={dataset.strokeColour || '#fff'}
-          yAxisId={0}
-          dot={false} // Hide the dots on the line
-          name={dataset.label}
-        />
-      ))}
-
-      {bands1.refPoints.map((point, index) => (
-        <ReferenceLine
-          key={index}
-          y={point}
-          label={{
-            value: `${bands1.refLabels[index]}`,
-            position: `insideLeft`,
-            style: {
-              fontSize: 14, // Small font size
-              fill: lens1.color || '#ffff00', // Font color
-              fontWeight: 'bold',
-            },
-          }}
-          stroke={lens1.color || 'red'}
-          strokeDasharray="1 4"
-        />
-      ))}
-      {lens1.lensDiameter == lens2.lensDiameter ? (
-        <></>
-      ) : (
-        <>
-          {bands2.refPoints.map((point, index) => (
-            <ReferenceLine
-              key={index}
-              y={point}
-              label={{
-                value: `${bands2.refLabels[index]}`,
-                position: `insideRight`,
-                style: {
-                  fontSize: 14, // Small font size
-                  fill: lens2.color || '#ffff00', // Font color
-                  fontWeight: 'bold',
-                },
-              }}
-              stroke={lens2.color || 'yellow'}
-              strokeDasharray="1 4"
+    <div ref={containerRef} style={{ width: '100%', height: '100%' }}>
+      {containerWidth > 0 && (
+        <ResponsiveContainer width="100%" height={containerWidth / aspectRatio}>
+          <LineChart margin={{ top: 0, right: 0, left: 0, bottom: 0 }}>
+            <XAxis
+              dataKey="x"
+              type="number"
+              domain={[xDomain[0], xDomain[1]]}
+              ticks={xTicks}
             />
-          ))}{' '}
-        </>
+            <YAxis domain={[yDomain[0], yDomain[1]]} ticks={yTicks} />
+            <CartesianGrid strokeDasharray="1 9" fill="#222" />
+            <Legend verticalAlign="bottom" align="center" />
+            {datasets.map((dataset, index) => (
+              <Line
+                key={`kattLens-${index}`}
+                type="monotone"
+                data={dataset.data}
+                dataKey="y"
+                stroke={dataset.strokeColour || '#fff'}
+                yAxisId={0}
+                dot={false} // Hide the dots on the line
+                name={dataset.label}
+              />
+            ))}
+
+            {bands1.refPoints.map((point, index) => (
+              <ReferenceLine
+                key={`band1-${index}`}
+                y={point}
+                label={{
+                  value: `${bands1.refLabels[index]}`,
+                  position: `insideLeft`,
+                  style: {
+                    fontSize: 14, // Small font size
+                    fill: lens1.color || '#ffff00', // Font color
+                    fontWeight: 'bold',
+                  },
+                }}
+                stroke={lens1.color || 'red'}
+                strokeDasharray="1 4"
+              />
+            ))}
+            {lens1.lensDiameter == lens2.lensDiameter ? (
+              <></>
+            ) : (
+              <>
+                {bands2.refPoints.map((point, index) => (
+                  <ReferenceLine
+                    key={`band2-${index}`}
+                    y={point}
+                    label={{
+                      value: `${bands2.refLabels[index]}`,
+                      position: `insideRight`,
+                      style: {
+                        fontSize: 14, // Small font size
+                        fill: lens2.color || '#ffff00', // Font color
+                        fontWeight: 'bold',
+                      },
+                    }}
+                    stroke={lens2.color || 'yellow'}
+                    strokeDasharray="1 4"
+                  />
+                ))}{' '}
+              </>
+            )}
+          </LineChart>
+        </ResponsiveContainer>
       )}
-    </LineChart>
+    </div>
   );
 };
 
-KattLensPlot.propTypes = {
-  plotWidth: PropTypes.number.isRequired,
-};
+KattLensPlot.propTypes = {};
 
 export default KattLensPlot;

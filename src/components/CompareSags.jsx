@@ -6,8 +6,35 @@ import { useKattLenses } from '../hooks/useKattLenses';
 import PropTypes from 'prop-types';
 import Grid from '@mui/material/Grid';
 
-const CompareSags = ({ initialWidth = 0 }) => {
+const CompareSags = ({ halfChordIndex }) => {
   const { kattLenses } = useKattLenses();
+
+  // get the initial width from localStorage based on halfChordIndex
+  let initialWidth = localStorage.getItem(`kattHalfChord${halfChordIndex}`);
+  if (initialWidth === null || isNaN(initialWidth) || initialWidth === '') {
+    switch (halfChordIndex) {
+      case '0':
+        initialWidth = 0;
+        break;
+      case '1':
+        initialWidth = 3;
+        break;
+      case '2':
+        initialWidth = 5;
+        break;
+      case '3':
+        initialWidth = 6;
+        break;
+      case '4':
+        initialWidth = 7;
+        break;
+      default:
+        initialWidth = 0;
+    }
+  } else {
+    initialWidth = parseFloat(initialWidth);
+  }
+
   const [inputValue, setInputValue] = useState(initialWidth);
   const [outputValue, setOutputValue] = useState(0);
 
@@ -54,6 +81,7 @@ const CompareSags = ({ initialWidth = 0 }) => {
 
     if (!isNaN(newValue) && newValue >= 0 && newValue <= 10) {
       setInputValue(newValue);
+      localStorage.setItem(`kattHalfChord${halfChordIndex}`, newValue);
       calculateAndSetOutput(newValue); // Function to calculate and set the output value
     }
   };
@@ -62,26 +90,34 @@ const CompareSags = ({ initialWidth = 0 }) => {
     <Grid container spacing={1} alignItems="center">
       <Grid item xs={5} sm={5}>
         <TextField
-          label="from centre"
           type="number"
           value={inputValue}
           onChange={handleInputChange}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
-                <span style={{ fontSize: 'small' }}>mm</span>
+                <span
+                  style={{
+                    fontSize: 'small',
+                  }}
+                >
+                  mm
+                </span>
               </InputAdornment>
             ),
           }}
           inputProps={{ min: 0, max: 10, step: 0.1 }}
-          variant="outlined"
+          variant="standard"
           autoComplete="off"
           size="small"
           sx={{ width: '100%' }} // Adjust width as needed
         />
       </Grid>
       <Grid item xs={7} sm={7}>
-        <Typography variant="body2" sx={{ textAlign: 'left' }}>
+        <Typography
+          variant="body1"
+          sx={{ textAlign: 'left', fontWeight: 'bold', color: '#2ecc71' }}
+        >
           {outputValue} µm
         </Typography>
       </Grid>
@@ -89,6 +125,6 @@ const CompareSags = ({ initialWidth = 0 }) => {
   );
 };
 
-CompareSags.propTypes = { initialWidth: PropTypes.number };
+CompareSags.propTypes = { halfChordIndex: PropTypes.string.isRequired };
 
 export default CompareSags;

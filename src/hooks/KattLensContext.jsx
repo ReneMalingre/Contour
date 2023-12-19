@@ -6,10 +6,12 @@ import KattLens from '../components/common/KattLens';
 export const KattLensContext = createContext();
 
 export const KattLensProvider = ({ children }) => {
-  const [kattLenses, setKattLenses] = useState({
-    lens1: new KattLens(7.7, 0.98, 50, 45, 0, 16.5, 'lens1', true),
-    lens2: new KattLens(7.7, 0.5, 50, 45, 0, 16.5, 'lens2', true),
-  });
+  // Create the lenses
+  const lens1 = new KattLens(7.7, 0.98, 50, 45, 0, 16.5, 'lens1', true);
+
+  const lens2 = new KattLens(7.7, 0.5, 50, 45, 0, 16.5, 'lens2', true);
+
+  const [kattLenses, setKattLenses] = useState({ lens1, lens2 });
 
   // Function to update a specific lens
   const updateLens = (lensKey, newLensData) => {

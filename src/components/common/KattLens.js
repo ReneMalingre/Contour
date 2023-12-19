@@ -51,6 +51,31 @@ class KattLens {
     load = false,
   ) {
     // initialise properties based on input parameters
+    // do some validation of the input parameters
+    if (baseCurve < 4 || baseCurve > 15) {
+      baseCurve = 7.7;
+    }
+    if (eValue < 0 || eValue > 2) {
+      eValue = 0.98;
+    }
+    if (t1 < 20 || t1 > 80) {
+      t1 = 50;
+    }
+    if (t2 < 20 || t2 > 80) {
+      t2 = 45;
+    }
+    // ensure that the slz is an integer
+    slz = parseInt(slz);
+    if (slz < 0 || slz > 5) {
+      slz = 0;
+    }
+    // ensure that the lens diameter is a multiple of 0.5
+    lensDiameter = Math.round(lensDiameter * 2) / 2;
+    // check for valid values
+    if (lensDiameter < 16.5 || lensDiameter > 18.5) {
+      lensDiameter = 16.5;
+    }
+
     this.#baseCurve = baseCurve;
     this.#eValue = eValue;
     this.#t1 = t1;
@@ -60,7 +85,13 @@ class KattLens {
     this.#localStorageIdentifier = lensKey;
 
     // public properties
-    this.color = '#ffff00'; // default to yellow
+    if (lensKey === 'lens1') {
+      this.color = '#007bff';
+    } else if (lensKey === 'lens2') {
+      this.color = '#ff6b6b';
+    } else {
+      this.color = '#ffff00'; // default to yellow
+    }
     this.drawBandLabels = false; // draw labels for the lens bands
     this.drawSagLabels = true; // draw labels for the sagitta
 
@@ -83,7 +114,6 @@ class KattLens {
       t2: this.#t2,
       slz: this.#slz,
       lensDiameter: this.#lensDiameter,
-      color: this.color,
       // ... other properties
     };
     const localStorageIdentifier = this.#localStorageIdentifier || 'default';
@@ -133,11 +163,7 @@ class KattLens {
       } else {
         this.#lensDiameter = 16.5;
       }
-      if (data.color !== undefined) {
-        this.color = data.color;
-      } else {
-        this.color = '#ffff00';
-      }
+
       // Repeat the above pattern for other private fields if any
     }
   }
@@ -267,31 +293,60 @@ class KattLens {
 
   // setters
   set baseCurve(baseCurve) {
+    // check for valid values
+    if (baseCurve < 4 || baseCurve > 15) {
+      baseCurve = 7.7;
+    }
     this.#baseCurve = baseCurve;
     this.#haveCalculatedBandSags = false;
     this.#haveCalculatedPoints = false;
   }
   set eValue(eValue) {
+    // check for valid values
+    if (eValue < 0 || eValue > 2) {
+      eValue = 0.98;
+    }
     this.#eValue = eValue;
     this.#haveCalculatedBandSags = false;
     this.#haveCalculatedPoints = false;
   }
   set t1(t1) {
+    // check for valid values
+    if (t1 < 20 || t1 > 80) {
+      t1 = 50;
+    }
     this.#t1 = t1;
     this.#haveCalculatedBandSags = false;
     this.#haveCalculatedPoints = false;
   }
   set t2(t2) {
+    // check for valid values
+    if (t2 < 20 || t2 > 80) {
+      t2 = 45;
+    }
     this.#t2 = t2;
     this.#haveCalculatedBandSags = false;
     this.#haveCalculatedPoints = false;
   }
   set slz(slz) {
-    this.#slz = slz;
+    // ensure that the slz is an integer
+    this.#slz = parseInt(slz);
+    // check for valid values
+    if (this.#slz < 0 || this.#slz > 5) {
+      this.#slz = 0;
+    }
     this.#haveCalculatedBandSags = false;
     this.#haveCalculatedPoints = false;
   }
   set lensDiameter(lensDiameter) {
+    // ensure that the lens diameter is a multiple of 0.5
+    lensDiameter = Math.round(lensDiameter * 2) / 2;
+
+    // check for valid values
+    if (lensDiameter < 16.5 || lensDiameter > 18.5) {
+      lensDiameter = 16.5;
+    }
+
     this.#lensDiameter = lensDiameter;
     this.#haveCalculatedBandWidths = false;
     this.#haveCalculatedBandSags = false;

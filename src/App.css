@@ -5,6 +5,12 @@
   text-align: center;
 }
 
+body {
+  place-items: start;
+  align-items: start;
+  justify-items: start;
+}
+
 .logo {
   height: 6em;
   padding: 1.5em;
