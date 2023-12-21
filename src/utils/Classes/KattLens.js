@@ -1,4 +1,4 @@
-import { calculateSag, calculateTangentSag } from '../../utils/lensDesigns';
+import { calculateSag, calculateTangentSag } from '../lensDesigns';
 
 class KattLens {
   // private properties

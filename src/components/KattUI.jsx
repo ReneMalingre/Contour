@@ -4,7 +4,7 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Stack from '@mui/material/Stack';
 import { Grid } from '@mui/material';
 import { useKattLenses } from '../hooks/useKattLenses';
-import KattLens from './common/KattLens';
+import KattLens from '../utils/Classes/KattLens';
 import PropTypes from 'prop-types';
 import Typography from '@mui/material/Typography';
 

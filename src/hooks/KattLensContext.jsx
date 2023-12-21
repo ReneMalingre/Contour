@@ -1,7 +1,7 @@
 // KattLensContext.jsx
 import { createContext, useState } from 'react';
 import PropTypes from 'prop-types';
-import KattLens from '../components/common/KattLens';
+import KattLens from '../utils/Classes/KattLens';
 
 export const KattLensContext = createContext();
 

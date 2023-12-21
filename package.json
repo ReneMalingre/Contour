@@ -18,9 +18,14 @@
     "@fontsource/roboto": "^5.0.8",
     "@mui/icons-material": "^5.15.0",
     "@mui/material": "^5.15.0",
+    "curve-interpolator": "^3.3.1",
+    "mathjs": "^12.2.1",
+    "plotly.js": "^2.27.1",
     "react": "^18.2.0",
     "react-color": "^2.19.3",
     "react-dom": "^18.2.0",
+    "react-plotly.js": "^2.6.0",
+    "react-router-dom": "^6.21.0",
     "recharts": "^2.10.3"
   },
   "devDependencies": {

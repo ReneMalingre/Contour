@@ -1,6 +1,6 @@
 import { useKattLenses } from '../hooks/useKattLenses';
 import Button from '@mui/material/Button';
-import KattLens from './common/KattLens';
+import KattLens from '../utils/Classes/KattLens';
 const KattCopyLenses = () => {
   const { kattLenses, updateLens } = useKattLenses();
 

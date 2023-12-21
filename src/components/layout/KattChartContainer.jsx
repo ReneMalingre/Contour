@@ -28,7 +28,7 @@ const ChartContainer = () => {
           aria-labelledby="chart-width-slider"
           valueLabelDisplay="auto"
           orientation="horizontal"
-          min={10} // Minimum width percentage
+          min={40} // Minimum width percentage
           max={100} // Maximum width percentage
           sx={{ width: 320 }}
         />
