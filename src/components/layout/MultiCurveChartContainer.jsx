@@ -1,18 +1,18 @@
 import { useState, useEffect } from 'react';
 import { Slider, Box, Grid } from '@mui/material';
-import KattLensPlot from './../graphs/KattLensPlot';
+import MultiCurveLensPlot from './../graphs/MultiCurveLensPlot';
 
-const KattChartContainer = () => {
+const MultiCurveChartContainer = () => {
   // Step 1: Initialize chartWidth from localStorage
-  const initialWidth = localStorage.getItem('kattChartWidth')
-    ? parseInt(localStorage.getItem('kattChartWidth'), 10)
+  const initialWidth = localStorage.getItem('MultiCurveChartWidth')
+    ? parseInt(localStorage.getItem('MultiCurveChartWidth'), 10)
     : 100;
 
   const [chartWidth, setChartWidth] = useState(initialWidth);
 
   // Step 2: Update localStorage when chartWidth changes
   useEffect(() => {
-    localStorage.setItem('kattChartWidth', chartWidth);
+    localStorage.setItem('MultiCurveChartWidth', chartWidth);
   }, [chartWidth]);
 
   const handleSliderChange = (event, newValue) => {
@@ -47,11 +47,11 @@ const KattChartContainer = () => {
             mb: 1,
           }}
         >
-          <KattLensPlot />
+          <MultiCurveLensPlot />
         </Box>
       </Grid>
     </Grid>
   );
 };
 
-export default KattChartContainer;
+export default MultiCurveChartContainer;

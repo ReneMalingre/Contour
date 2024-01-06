@@ -66,5 +66,3 @@ export const MultiCurveProvider = ({ children }) => {
 MultiCurveProvider.propTypes = {
   children: PropTypes.node.isRequired,
 };
-
-export default MultiCurveProvider;

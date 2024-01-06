@@ -9,11 +9,22 @@ import {
   Grid,
   Typography,
 } from '@mui/material';
-import { MultiCurveContext } from '../context/MultiCurveContext';
-import { calculateSag, calculateTangentSag } from '../../utils/lensDesigns'; // Assuming a utility function for sag calculation
+import { MultiCurveContext } from '../../hooks/MultiCurveContext';
+import { calculateSag, calculateTangentSag } from '../../utils/lensDesigns'; // function for sag calculations
+import { useMultiCurveLenses } from '../../hooks/useMultiCurveLenses';
+import PropTypes from 'prop-types';
 
-const RGPBandUI = ({ bandKey }) => {
+const RGPBandUI = ({ lensKey, bandIndex }) => {
+  const { multiCurveLenses, updateBand, addBand, removeBand } =
+    useMultiCurveLenses();
+  const lens = multiCurveLenses[lensKey];
+
   const [formType, setFormType] = useState('Asphere');
+  const [isToric, setIsToric] = useState(false);
+
+  setIsToric(lens.bands[bandIndex].isToric);
+  setFormType(lens.bands[bandIndex].formType);
+
   const [inputValues, setInputValues] = useState({
     angle: isToric ? [10, 10] : [10],
     width: isToric ? [0.1, 0.1] : [0.1],
@@ -37,8 +48,10 @@ const RGPBandUI = ({ bandKey }) => {
     // Validate inputs here
 
     // Calculate sags and update context
-    // const sags = inputValues.angle.map((angle, index) => calculateSag(inputValues, index, formType));
-    updateLensBand(bandKey, { ...inputValues, sags });
+    const sags = inputValues.angle.map((angle, index) =>
+      calculateSag(inputValues, index, formType),
+    );
+    updateLensBand(bandIndex, { ...inputValues, sags });
   };
 
   return (
@@ -167,6 +180,11 @@ const RGPBandUI = ({ bandKey }) => {
       <button onClick={handleSubmit}>Update Lens Band</button>
     </div>
   );
+};
+
+RGPBandUI.propTypes = {
+  lensKey: PropTypes.string.isRequired,
+  bandIndex: PropTypes.number.isRequired,
 };
 
 export default RGPBandUI;

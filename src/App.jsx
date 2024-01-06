@@ -13,6 +13,7 @@ function App() {
       <MenuBar />
       <Routes>
         <Route path="/" element={<ContactLensWidgets />} />
+        <Route path="/Contour" element={<ContactLensWidgets />} />
         <Route path="/katt-designer" element={<KattDesigner />} />
         <Route path="/multi-curve-designer" element={<MultiCurveDesigner />} />
         <Route path="/eye-model" element={<EyePlot />} />
